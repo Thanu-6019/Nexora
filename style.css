@@ -1,79 +1,190 @@
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-/* Base Styles */
-body { font-family: 'Inter', sans-serif; }
-
-/* Gradient Background */
-.gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-
-/* Card Hover Effects */
-.card-hover { transition: all 0.3s ease; }
-.card-hover:hover { transform: translateY(-5px); box-shadow: 0 25px 35px rgba(0,0,0,0.1),0 12px 12px rgba(0,0,0,0.06); }
-
-/* AI Pulse Animation */
-.ai-pulse { animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.7} }
-
-/* Tailwind Config Colors */
-:root {
-    --primary: #6366f1;
-    --secondary: #8b5cf6;
-    --accent: #06b6d4;
+/* General Styles */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f9fafb;
 }
 
-/* Gradient Text */
-.text-gradient-primary {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
+/* Gradient Hero Animation */
+.gradient-animated {
+    background: linear-gradient(270deg, #6366f1, #8b5cf6, #06b6d4);
+    background-size: 600% 600%;
+    animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 /* Buttons */
-.btn-primary { background-color: var(--primary); color:white; padding:0.75rem 1.5rem; border-radius:0.5rem; font-weight:600; transition: background-color 0.2s ease; }
-.btn-primary:hover { background-color: rgba(99,102,241,0.9); }
-.btn-secondary { border:1px solid white; color:white; padding:0.75rem 1.5rem; border-radius:0.5rem; font-weight:600; transition: background-color 0.2s ease; }
-.btn-secondary:hover { background-color: rgba(255,255,255,0.1); }
-
-/* Button click animation */
-.btn-scale { transition: transform 0.2s ease; }
-.btn-scale:active { transform: scale(0.95); }
-
-/* Navigation */
-.nav-link { color: #6b7280; padding:0.5rem 0.75rem; border-radius:0.375rem; font-size:0.875rem; font-weight:500; transition: color 0.2s ease; }
-.nav-link:hover { color: var(--primary); }
-.nav-link.active { color: #111827; }
-
-/* Feature Cards */
-.feature-card, .quick-action-card { background:white; border-radius:0.75rem; padding:1.5rem; box-shadow:0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06); border:1px solid #e5e7eb; }
-.feature-icon { width:3rem; height:3rem; border-radius:0.5rem; display:flex; align-items:center; justify-content:center; margin-bottom:1rem; }
-.feature-icon.primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); }
-.feature-icon.accent { background: linear-gradient(135deg, var(--accent), var(--primary)); }
-.feature-icon.secondary { background: linear-gradient(135deg, var(--secondary), var(--accent)); }
-
-/* Quick Action Cards */
-.quick-action-icon { width:2.5rem; height:2.5rem; border-radius:0.5rem; display:flex; align-items:center; justify-content:center; margin-bottom:1rem; text-align:center; }
-
-/* Event List */
-.event-item { display:flex; align-items:center; justify-content:space-between; padding:1rem; background-color:#f9fafb; border-radius:0.5rem; }
-.event-avatar { width:3rem; height:3rem; border-radius:0.5rem; display:flex; align-items:center; justify-content:center; font-weight:600; color:white; }
-.status-badge { padding:0.25rem 0.5rem; border-radius:9999px; font-size:0.75rem; font-weight:500; }
-.status-live { background-color:#dcfce7; color:#166534; }
-.status-upcoming { background-color:#dbeafe; color:#1e40af; }
-
-/* Scroll to Top Button */
-#scrollTopBtn {
-    position: fixed; bottom:2rem; right:2rem; background-color: var(--primary); color:white; padding:0.75rem; border-radius:50%; font-size:1.25rem; cursor:pointer; display:none; z-index:50; box-shadow:0 5px 15px rgba(0,0,0,0.2); transition: transform 0.2s ease;
+.btn-primary {
+    background-color: #6366f1;
+    color: #fff;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
-#scrollTopBtn:hover { transform: scale(1.1); }
 
-/* Responsive */
-@media (max-width:768px){.hero-content{text-align:center}.nav-desktop{display:none}.grid-responsive{grid-template-columns:1fr}}
-@media (min-width:769px){.grid-responsive{grid-template-columns:repeat(2,1fr)}}
-@media (min-width:1024px){.grid-responsive-lg{grid-template-columns:repeat(4,1fr)}}
+.btn-primary:hover {
+    background-color: #4f46e5;
+    transform: translateY(-2px);
+}
 
-/* Utility colors */
-.text-primary{color:var(--primary)} .text-secondary{color:var(--secondary)} .text-accent{color:var(--accent)}
-.bg-primary{background-color:var(--primary)} .bg-secondary{background-color:var(--secondary)} .bg-accent{background-color:var(--accent)}
-.border-primary{border-color:var(--primary)} .border-secondary{border-color:var(--secondary)} .border-accent{border-color:var(--accent)}
+.btn-scale {
+    transition: transform 0.2s;
+}
+
+.btn-scale:hover {
+    transform: scale(1.05);
+}
+
+/* Cards */
+.feature-card, .quick-action-card {
+    background: #fff;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+}
+
+.feature-icon, .quick-action-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    font-size: 1.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+/* AI pulse */
+.ai-pulse {
+    animation: pulse 2s infinite;
+    color: currentColor;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Events List */
+.event-item {
+    background: #fff;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s;
+}
+
+.event-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.event-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.bg-primary { background-color: #6366f1; }
+.bg-secondary { background-color: #8b5cf6; }
+
+/* Status Badge */
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-live { background-color: #34d399; color: #fff; }
+.status-upcoming { background-color: #fbbf24; color: #fff; }
+
+/* Modal */
+#eventModal.active {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+#eventModal {
+    transition: opacity 0.3s;
+}
+
+/* Search Suggestions */
+#suggestions li {
+    list-style: none;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#suggestions li:hover {
+    background-color: #f3f4f6;
+}
+
+/* Scroll Button */
+#scrollTopBtn {
+    transition: all 0.3s ease;
+}
+
+/* Nexora Logo Hover Effect - Clean Version */
+
+/* Hide the logo text by default */
+.logo-text {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Scale logo slightly on hover */
+.logo-container:hover .logo-img {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+}
+
+/* Keep logo text hidden */
+.logo-container:hover .logo-text {
+    opacity: 0;
+}
+
+/* Move nav links slightly to the right on logo hover */
+.logo-container:hover ~ .nav-links {
+    transform: translateX(100px); /* adjust px as needed */
+    transition: transform 0.3s ease;
+}
+
+/* Default nav-links */
+.nav-links {
+    transition: transform 0.3s ease;
+}
+
+/* Responsive fix */
+@media (max-width: 768px) {
+    .logo-container:hover ~ .nav-links {
+        transform: translateX(0); /* disable shift on small screens */
+    }
+}
+
+/* Previous Logo Group Hover (Optional fallback) */
+.group:hover .w-10 {
+    transform: scale(1.05);
+    transition: transform 0.3s;
+}
 
