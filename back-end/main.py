@@ -1,5 +1,6 @@
-# (1) New imports for FastAPI, async, and database
-from fastapi import FastAPI, Depends, HTTPException, status, APIRouter
+# (1) New imports for all functionality
+import os
+from fastapi import FastAPI, Depends, HTTPException, status, APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -8,9 +9,18 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import random
+from typing import List, Dict
 
-# (2) PostgreSQL database setup
-DATABASE_URL = "postgresql://user:password@host:port/dbname" # This would be a real connection string
+# Local imports for AI and Carbon Footprint functions
+# Note: This assumes ai_matching.py and carbon_footprint.py are in the same directory or package
+from .ai_matching import match_users_by_skills, recommend_events_for_user
+from .carbon_footprint import estimate_event_carbon_footprint
+
+# (2) PostgreSQL database setup - FIXED to use environment variables
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
+    
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -78,7 +88,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-# (6) New Authentication and Event routes
+# (6) Authentication and Event routes
 @app.post("/signup", status_code=status.HTTP_201_CREATED)
 def signup(data: dict, db=Depends(lambda: SessionLocal())):
     hashed_password = get_password_hash(data['password'])
@@ -101,7 +111,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db=
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
-# (7) New Event routes with dependencies
+# (7) Event routes with dependencies
 @app.post("/events", status_code=status.HTTP_201_CREATED)
 def create_event(data: dict, current_user: dict = Depends(get_current_user), db=Depends(lambda: SessionLocal())):
     organizer = db.query(User).filter(User.username == current_user['username']).first()
@@ -122,12 +132,8 @@ def create_event(data: dict, current_user: dict = Depends(get_current_user), db=
 def get_events(db=Depends(lambda: SessionLocal())):
     events = db.query(Event).all()
     return events
-# (1) Add the new import for your AI functions
-from .ai_matching import match_users_by_skills, recommend_events_for_user
-from fastapi import FastAPI, Depends, HTTPException, status, APIRouter
-# ... other imports from your existing FastAPI file
 
-# (2) Place this new endpoint after your existing routes
+# (8) New AI-powered endpoints
 @app.post("/match_participants_ai", status_code=status.HTTP_200_OK)
 def match_participants_ai(data: dict, current_user: dict = Depends(get_current_user), db=Depends(lambda: SessionLocal())):
     """
@@ -137,11 +143,8 @@ def match_participants_ai(data: dict, current_user: dict = Depends(get_current_u
     if not participant_ids:
         return {"message": "No participant IDs provided."}
     
-    # In a real app, you would retrieve participants from the database
-    # For this example, we'll use a dummy data retrieval
     participants = db.query(User).filter(User.id.in_(participant_ids), User.role == 'participant').all()
     
-    # Format the users into the structure the AI function expects
     user_list = [
         {'id': p.id, 'name': p.username, 'skills': p.skills or ''}
         for p in participants
@@ -150,12 +153,10 @@ def match_participants_ai(data: dict, current_user: dict = Depends(get_current_u
     if len(user_list) < 2:
         return {"message": "Not enough participants for matching."}
     
-    # Call the AI function to get the matches
     matches = match_users_by_skills(user_list)
     
     return {"matches": matches}
 
-# (3) Add another endpoint for event recommendations
 @app.get("/recommend_events", status_code=status.HTTP_200_OK)
 def get_recommended_events(user_id: int, db=Depends(lambda: SessionLocal())):
     """
@@ -175,17 +176,10 @@ def get_recommended_events(user_id: int, db=Depends(lambda: SessionLocal())):
     recommended = recommend_events_for_user(user_profile_string, event_list)
     
     return {"recommendations": recommended}
-    # (1) Add the new imports for WebSocket and the class
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from typing import List, Dict
 
-# ... your other existing imports from main.py
-
-# (2) This new class manages active WebSocket connections for each event
+# (9) WebSocket Chat Endpoint
 class ConnectionManager:
     def __init__(self):
-        # A dictionary to hold active connections, with event_id as the key
-        # and a list of WebSockets as the value
         self.active_connections: Dict[int, List[WebSocket]] = {}
 
     async def connect(self, websocket: WebSocket, event_id: int):
@@ -204,109 +198,30 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-# (3) This is the new WebSocket endpoint. Add it alongside your other routes.
 @app.websocket("/ws/chat/{event_id}/{username}")
 async def websocket_endpoint(
     websocket: WebSocket, event_id: int, username: str
 ):
-    # Connect the user to the specified chat room (event_id)
     await manager.connect(websocket, event_id)
     print(f"User {username} joined event {event_id} chat.")
     
     try:
-        # A loop to receive messages from the client
         while True:
             data = await websocket.receive_text()
-            
-            # Format the message to be broadcasted to the room
             message = f"{username}: {data}"
-            
-            # Broadcast the message to all connected clients in this event room
             await manager.broadcast(message, event_id)
             
     except WebSocketDisconnect:
-        # Remove the user from the connection list when they disconnect
         manager.disconnect(websocket, event_id)
         print(f"User {username} left event {event_id} chat.")
-        # Optionally, broadcast a "user left" message
-        await manager.broadcast(f"User {username} has left the chat.", event_id)
-import random
-from typing import List, Dict
-from .carbon_footprint import estimate_event_carbon_footprint
-from fastapi import FastAPI, Depends, HTTPException, status, APIRouter, WebSocket, WebSocketDisconnect
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey
-from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy.sql.expression import text
-from passlib.context import CryptContext
-from jose import JWTError, jwt
-from datetime import datetime, timedelta
-
-# ... (Existing imports from your main.py file)
-
-# (1) This new class manages active WebSocket connections for each event
-class ConnectionManager:
-    def __init__(self):
-        # A dictionary to hold active connections, with event_id as the key
-        # and a list of WebSockets as the value
-        self.active_connections: Dict[int, List[WebSocket]] = {}
-
-    async def connect(self, websocket: WebSocket, event_id: int):
-        await websocket.accept()
-        if event_id not in self.active_connections:
-            self.active_connections[event_id] = []
-        self.active_connections[event_id].append(websocket)
-
-    def disconnect(self, websocket: WebSocket, event_id: int):
-        self.active_connections[event_id].remove(websocket)
-
-    async def broadcast(self, message: str, event_id: int):
-        if event_id in self.active_connections:
-            for connection in self.active_connections[event_id]:
-                await connection.send_text(message)
-
-manager = ConnectionManager()
-
-# ... (Existing SQLAlchemy setup and models)
-
-# (2) Place this new endpoint after your existing routes.
-@app.websocket("/ws/chat/{event_id}/{username}")
-async def websocket_endpoint(
-    websocket: WebSocket, event_id: int, username: str
-):
-    # Connect the user to the specified chat room (event_id)
-    await manager.connect(websocket, event_id)
-    print(f"User {username} joined event {event_id} chat.")
-    
-    try:
-        # A loop to receive messages from the client
-        while True:
-            data = await websocket.receive_text()
-            
-            # Format the message to be broadcasted to the room
-            message = f"{username}: {data}"
-            
-            # Broadcast the message to all connected clients in this event room
-            await manager.broadcast(message, event_id)
-            
-    except WebSocketDisconnect:
-        # Remove the user from the connection list when they disconnect
-        manager.disconnect(websocket, event_id)
-        print(f"User {username} left event {event_id} chat.")
-        # Optionally, broadcast a "user left" message
         await manager.broadcast(f"User {username} has left the chat.", event_id)
 
-
-# (3) Add a new API endpoint to calculate carbon footprint
+# (10) Carbon Footprint and Leaderboard Endpoints
 @app.get("/events/{event_id}/carbon_footprint", status_code=status.HTTP_200_OK)
 def get_carbon_footprint(event_id: int):
     """
     Estimates the carbon footprint for a given event.
     """
-    # NOTE: In a real application, you would fetch these details from the database
-    # based on the event_id and participant data.
-    
-    # Dummy data for demonstration purposes
     dummy_participants = random.randint(50, 500)
     dummy_transport = {
         "car": 0.4,
@@ -322,15 +237,11 @@ def get_carbon_footprint(event_id: int):
         "estimated_carbon_footprint_kg": round(footprint_kg, 2)
     }
 
-# (4) Add a new API endpoint for the leaderboard
 @app.get("/events/{event_id}/leaderboard", status_code=status.HTTP_200_OK)
 def get_leaderboard(event_id: int):
     """
     Returns a leaderboard of participants for a given event.
     """
-    # NOTE: In a real application, you would fetch this data from the database.
-    
-    # Dummy data for demonstration purposes
     dummy_leaderboard_data = [
         {"name": "Alice", "score": 950},
         {"name": "Bob", "score": 920},
