@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import random
 from typing import List, Dict
 
-from .carbon_footprint import estimate_event_carbon_footprint
+from backend.carbon_footprint import estimate_event_carbon_footprint
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
