@@ -1,20 +1,17 @@
-# --- STAGE 1: Builder Stage ---
-# Use a Python base image with a full build environment.
 FROM python:3.11-slim-bookworm AS builder
 
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the entire project directory into the container.
-# This is the key change. It ensures all files are available for the next steps,
-# regardless of where the build command is executed.
-COPY . .
-
-# Change into the backend directory to install requirements
-WORKDIR /app/backend
+# Copy the requirements file into the working directory.
+# This is the key change to fix the "not found" error.
+COPY backend/requirements.txt .
 
 # Install dependencies from the requirements file
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire backend application code into the working directory
+COPY backend/ ./backend/
 
 # --- STAGE 2: Final Production Image ---
 # Use a lightweight Python base image for the final application
