@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Copy the requirements file into the builder stage
 # We're only copying the requirements here to keep the first stage lightweight
-COPY requirements.txt .
+COPY backend/requirements.txt .
 
 # Install dependencies from the requirements file
 # The `--no-cache-dir` flag ensures a smaller image by not storing temporary files
