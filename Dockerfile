@@ -5,7 +5,7 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Copy only the requirements file first to leverage Docker's cache
-COPY backend/requirements.txt .
+COPY back-end/requirements.txt .
 
 # Install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 80
 
 # Define the start command to run your FastAPI application
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "back-end.main:app", "--host", "0.0.0.0", "--port", "80"]
