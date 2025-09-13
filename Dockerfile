@@ -5,12 +5,14 @@ FROM python:3.11-slim-bookworm AS builder
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the requirements file into the builder stage
-# We're only copying the requirements here to keep the first stage lightweight
-COPY backend/requirements.txt .
+# Copy the entire backend directory into the working directory
+# This ensures all files are available for the next steps
+COPY backend/ ./backend/
+
+# Change into the backend directory to install requirements
+WORKDIR /app/backend
 
 # Install dependencies from the requirements file
-# The `--no-cache-dir` flag ensures a smaller image by not storing temporary files
 RUN pip install --no-cache-dir -r requirements.txt
 
 # --- STAGE 2: Final Production Image ---
@@ -21,16 +23,14 @@ FROM python:3.11-slim-bookworm
 WORKDIR /app
 
 # Copy the installed packages from the builder stage
-# This is the key step of a multi-stage build: we copy only the essentials
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
-# Copy your application code into the final image
-# The dot `.` copies everything from the current directory
-COPY . .
+# Copy the entire backend directory from the builder stage
+# This includes all your Python files and the requirements.txt file
+COPY --from=builder /app/backend /app/backend
 
 # Expose the port the FastAPI application runs on
 EXPOSE 8000
 
-# Command to run the application using Uvicorn
+# Define the start command to run your FastAPI application from the correct folder
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
-
