@@ -1,33 +1,28 @@
+# Stage 1: Builder
 FROM python:3.11-slim-bookworm AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the requirements file into the working directory.
-# This is the key change to fix the "not found" error.
-COPY backend/requirements.txt .
+# Copy requirements.txt from back-end folder
+COPY back-end/requirements.txt .
 
-# Install dependencies from the requirements file
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire backend application code into the working directory
-COPY backend/ ./backend/
+# Copy the entire back-end source code
+COPY back-end/ ./back-end/
 
-# --- STAGE 2: Final Production Image ---
-# Use a lightweight Python base image for the final application
+# Stage 2: Final image
 FROM python:3.11-slim-bookworm
 
-# Set the working directory
 WORKDIR /app
 
-# Copy the installed packages from the builder stage
+# Copy installed packages from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
-# Copy the application code from the builder stage
-COPY --from=builder /app/backend /app/backend
+# Copy back-end source code
+COPY --from=builder /app/back-end /app/back-end
 
-# Expose the port the FastAPI application runs on
 EXPOSE 8000
 
-# Define the start command to run your FastAPI application
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "back-end.main:app", "--host", "0.0.0.0", "--port", "8000"]
