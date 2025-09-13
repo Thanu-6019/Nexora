@@ -4,7 +4,7 @@ FROM python:3.9-slim
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy only the requirements file first to leverage Docker's cache
+# Copy the requirements file into the working directory
 COPY back-end/requirements.txt .
 
 # Install the dependencies
