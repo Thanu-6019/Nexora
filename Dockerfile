@@ -5,9 +5,10 @@ FROM python:3.11-slim-bookworm AS builder
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the entire backend directory into the working directory
-# This ensures all files are available for the next steps
-COPY backend/ ./backend/
+# Copy the entire project directory into the container.
+# This is the key change. It ensures all files are available for the next steps,
+# regardless of where the build command is executed.
+COPY . .
 
 # Change into the backend directory to install requirements
 WORKDIR /app/backend
@@ -25,12 +26,11 @@ WORKDIR /app
 # Copy the installed packages from the builder stage
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
-# Copy the entire backend directory from the builder stage
-# This includes all your Python files and the requirements.txt file
+# Copy the application code from the builder stage
 COPY --from=builder /app/backend /app/backend
 
 # Expose the port the FastAPI application runs on
 EXPOSE 8000
 
-# Define the start command to run your FastAPI application from the correct folder
+# Define the start command to run your FastAPI application
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
