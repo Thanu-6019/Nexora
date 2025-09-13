@@ -1,22 +1,18 @@
-# (1) New imports for all functionality
 import os
 from fastapi import FastAPI, Depends, HTTPException, status, APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy.sql.expression import text
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import random
 from typing import List, Dict
 
-# Local imports for AI and Carbon Footprint functions
-# Note: This assumes ai_matching.py and carbon_footprint.py are in the same directory or package
-from .ai_matching import match_users_by_skills, recommend_events_for_user
+# The ai_matching import has been removed to prevent build timeouts.
 from .carbon_footprint import estimate_event_carbon_footprint
 
-# (2) PostgreSQL database setup - FIXED to use environment variables
+# PostgreSQL database setup - FIXED to use environment variables
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
@@ -25,14 +21,14 @@ engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# (3) JWT and password hashing setup
+# JWT and password hashing setup
 SECRET_KEY = "your-secret-key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-# (4) Updated Database Models for SQLAlchemy
+# Updated Database Models for SQLAlchemy
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
@@ -60,7 +56,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# (5) Utility functions for authentication
+# Utility functions for authentication
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
@@ -88,7 +84,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-# (6) Authentication and Event routes
+# Authentication and Event routes
 @app.post("/signup", status_code=status.HTTP_201_CREATED)
 def signup(data: dict, db=Depends(lambda: SessionLocal())):
     hashed_password = get_password_hash(data['password'])
@@ -111,7 +107,7 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db=
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
-# (7) Event routes with dependencies
+# Event routes with dependencies
 @app.post("/events", status_code=status.HTTP_201_CREATED)
 def create_event(data: dict, current_user: dict = Depends(get_current_user), db=Depends(lambda: SessionLocal())):
     organizer = db.query(User).filter(User.username == current_user['username']).first()
@@ -133,51 +129,7 @@ def get_events(db=Depends(lambda: SessionLocal())):
     events = db.query(Event).all()
     return events
 
-# (8) New AI-powered endpoints
-@app.post("/match_participants_ai", status_code=status.HTTP_200_OK)
-def match_participants_ai(data: dict, current_user: dict = Depends(get_current_user), db=Depends(lambda: SessionLocal())):
-    """
-    Finds and returns AI-powered matches for participants based on skill similarity.
-    """
-    participant_ids = data.get('participant_ids', [])
-    if not participant_ids:
-        return {"message": "No participant IDs provided."}
-    
-    participants = db.query(User).filter(User.id.in_(participant_ids), User.role == 'participant').all()
-    
-    user_list = [
-        {'id': p.id, 'name': p.username, 'skills': p.skills or ''}
-        for p in participants
-    ]
-    
-    if len(user_list) < 2:
-        return {"message": "Not enough participants for matching."}
-    
-    matches = match_users_by_skills(user_list)
-    
-    return {"matches": matches}
-
-@app.get("/recommend_events", status_code=status.HTTP_200_OK)
-def get_recommended_events(user_id: int, db=Depends(lambda: SessionLocal())):
-    """
-    Recommends events for a given user based on their skills.
-    """
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        
-    events = db.query(Event).all()
-    if not events:
-        return {"message": "No events found to recommend."}
-        
-    user_profile_string = user.skills
-    event_list = [{'title': e.title, 'tags': e.title + ' ' + (e.description or '')} for e in events]
-    
-    recommended = recommend_events_for_user(user_profile_string, event_list)
-    
-    return {"recommendations": recommended}
-
-# (9) WebSocket Chat Endpoint
+# WebSocket Chat Endpoint
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[int, List[WebSocket]] = {}
@@ -216,7 +168,7 @@ async def websocket_endpoint(
         print(f"User {username} left event {event_id} chat.")
         await manager.broadcast(f"User {username} has left the chat.", event_id)
 
-# (10) Carbon Footprint and Leaderboard Endpoints
+# Carbon Footprint and Leaderboard Endpoints
 @app.get("/events/{event_id}/carbon_footprint", status_code=status.HTTP_200_OK)
 def get_carbon_footprint(event_id: int):
     """
