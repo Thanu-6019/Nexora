@@ -1,3 +1,5 @@
+# --- STAGE 1: Builder Stage ---
+# Use a Python base image with a full build environment.
 FROM python:3.11-slim-bookworm AS builder
 
 # Set the working directory inside the container
@@ -31,4 +33,5 @@ EXPOSE 8000
 
 # Command to run the application using Uvicorn
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
 
