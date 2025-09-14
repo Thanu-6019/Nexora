@@ -24,19 +24,15 @@ jobs:
       - name: Build app
         run: npm run build
 
-      - name: Trigger Render deploy
-        id: render_deploy
-        uses: jakejarvis/render-deploy-action@v1.0.0
-        with:
-          api_key: ${{ secrets.RENDER_API_KEY }}
-          service_id: srv-d3374e3uibrs73ac3kk0
+      - name: Install Render CLI
+        run: |
+          curl -fsSL https://cdn.render.com/cli/latest/install.sh | bash
+          export PATH=$HOME/.render/bin:$PATH
+          render --version
 
-      - name: Wait for deploy to complete
-        uses: jakejarvis/render-deploy-action@v1.0.0
-        with:
-          api_key: ${{ secrets.RENDER_API_KEY }}
-          service_id: srv-d3374e3uibrs73ac3kk0
-          wait_for_deploy: true
-
-      - name: Deployment status
-        run: echo "Render deploy URL:${{ steps.render_deploy.outputs.deploy_url }}"
+      - name: Trigger deploy on Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          export PATH=$HOME/.render/bin:$PATH
+          render services deploy srv-d3374e3uibrs73ac3kk0
